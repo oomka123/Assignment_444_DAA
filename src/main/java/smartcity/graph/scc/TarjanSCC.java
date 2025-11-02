@@ -1,6 +1,7 @@
 package smartcity.graph.scc;
 
 import smartcity.model.*;
+import smartcity.metrics.Metrics;
 import java.util.*;
 
 /**
@@ -15,8 +16,10 @@ public class TarjanSCC {
     private int id;
     private int sccCount;
     private List<List<Integer>> sccs;
+    private Metrics metrics;
 
-    public List<List<Integer>> findSCCs(Graph graph) {
+    public List<List<Integer>> findSCCs(Graph graph, Metrics metrics) {
+        this.metrics = metrics;
         int n = graph.getVertices();
         ids = new int[n];
         low = new int[n];
@@ -27,21 +30,27 @@ public class TarjanSCC {
         id = 0;
         sccCount = 0;
 
+        metrics.startTimer();
+
         for (int i = 0; i < n; i++) {
             if (ids[i] == -1) {
                 dfs(i, graph);
             }
         }
 
+        metrics.stopTimer();
         return sccs;
     }
 
     private void dfs(int at, Graph graph) {
+        metrics.incrementDFSVisits();
         stack.push(at);
+        metrics.incrementPushOperations();
         onStack[at] = true;
         ids[at] = low[at] = id++;
 
         for (Edge edge : graph.getAdjacentEdges(at)) {
+            metrics.incrementEdgesExplored();
             int to = edge.to;
             if (ids[to] == -1) {
                 dfs(to, graph);
@@ -56,6 +65,7 @@ public class TarjanSCC {
             List<Integer> scc = new ArrayList<>();
             while (true) {
                 int node = stack.pop();
+                metrics.incrementPopOperations();
                 onStack[node] = false;
                 low[node] = ids[at];
                 scc.add(node);
